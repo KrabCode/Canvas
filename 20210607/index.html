@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<head>
+    <style>
+      body, html {padding: 0; margin: 0; overflow: hidden; height:100%;}
+    </style>
+</head>
+
+<body>
+  <canvas id="canvas"/>
+</body>
+<script type="application/x-javascript">
+  // utils
+  function map(n, start1, stop1, start2, stop2){
+    return ((n-start1)/(stop1-start1))*(stop2-start2)+start2;
+  }
+
+  function lerp(a, b, n) {
+    return (b - a) * n + a;
+  }
+
+  function lerpColor(colorA, colorB, amt){
+    let r = lerp(colorA.r, colorB.r, amt);
+    let g = lerp(colorA.g, colorB.g, amt);
+    let b = lerp(colorA.b, colorB.b, amt);
+      return 'rgba(' + r +',' + g +','+ b +',1)';
+  }
+
+  function rgba(x){
+    return 'rgba(' + x.r +',' + x.g +','+ x.b +',1)'
+  }
+
+</script>
+<script type="application/javascript">
+  let c, w, h;
+  let canvas = document.getElementById("canvas");
+  c = canvas.getContext("2d");
+  let count = 20;
+  let maxSize = 200;
+  let colorBackground = {
+    r: 26,
+    g: 136,
+    b: 226
+  }
+  let colorForeground = {
+    r: 255,
+    g: 255,
+    b: 255
+  }
+
+  requestAnimationFrame(update);
+
+  let frameCount = 0;
+  function update(time){
+    frameCount++;
+    time *= 0.001;
+    updateCanvasSize();
+    c.resetTransform();
+    // c.clearRect(0,0,width,height);
+    c.fillStyle = rgba(colorBackground);
+    c.fillRect(0,0, width, height);
+
+    for(let i = 1; i < count; i++){
+      c.setTransform(1, 0, 0, 1, width / 2, height / 2);
+      let iNorm = map(i, 1, count-1, 0, 1);
+      c.rotate(iNorm * Math.PI * 2 * Math.cos(time));
+      let size = maxSize-iNorm*maxSize;
+      c.fillStyle = lerpColor(colorBackground, colorForeground, iNorm);
+      c.fillRect(-size, -size, size * 2, size * 2);
+    }
+    requestAnimationFrame(update);
+  }
+
+  function updateCanvasSize(){
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+</script>

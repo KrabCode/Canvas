@@ -4,9 +4,15 @@
       body, html {padding: 0; margin: 0; overflow: hidden; height:100%;}
       canvas { z-index: -1;}
       p {color: white; background-color: black;}
-
+      #fps{
+        padding: 0; margin: 0;
+        width: 60px;
+        text-align: center;
+      }
       #container {
         position: relative;
+        height:100%;
+        overflow: hidden;
       }
       #container canvas, #overlay {
         position: absolute;
@@ -17,7 +23,8 @@
 <body>
   <div id="container">
   <canvas id="canvas"></canvas>
-    <p id="fps" ></p>
+    <p id="fps"></p>
+    <p id="time"></p>
   </div>
 </body>
 <script type="application/x-javascript">
@@ -42,8 +49,8 @@
   }
 
   function constrain(x, min, max){
-    x = Math.max(x, max);
-    x = Math.min(x, min);
+    x = Math.max(x, min);
+    x = Math.min(x, max);
     return x;
   }
 
@@ -73,9 +80,9 @@
 
 
     function update(time){
-      updateFps();
+      document.getElementById("fps").innerHTML = averageFps();
       frameCount++;
-      time *= 0.001;
+      time *= 0.0005;
       updateCanvasSize();
       c.resetTransform();
       c.clearRect(0,0,width,height);
@@ -85,21 +92,33 @@
       requestAnimationFrame(update);
     }
 
-        var lastLoop = new Date();
-    function updateFps(){
+    var historicalFps = [];
+    var lastLoop = new Date();
+    function averageFps(){
       var thisLoop = new Date();
       var fps = 1000 / (thisLoop - lastLoop);
+      fps = constrain(fps, 0, 200);
       lastLoop = thisLoop;
-      document.getElementById("fps").innerHTML = fps;
+      let averagingRange = 120;
+      historicalFps.push(fps);
+      if(historicalFps.length > averagingRange){
+        historicalFps.shift();
+      }
+      let sum = 0;
+      historicalFps.forEach((item) => {
+        sum += item;
+      });
+      let avg = sum / historicalFps.length;
+      return Math.round(avg) + " fps";
     }
 
     function drawInnerMandala(time){
-      let count = 100;
+      let count = 50;
       let maxSize = 200;
       for(let i = 1; i < count; i++){
         setTransform(c, width / 2, height / 2);
         let iNorm = map(i, 1, count-1, 0, 1);
-        c.rotate(iNorm * Math.PI * 30 * Math.cos(time*0.1));
+        c.rotate(Math.PI / 4 + iNorm * Math.PI * 6 * (Math.cos(time)));
         let size = maxSize-iNorm*maxSize;
         c.strokeStyle = color(colorForeground);
         c.fillStyle = lerpColor(colorBackground, colorForeground, Math.pow(iNorm, 0.9));

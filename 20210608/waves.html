@@ -7,16 +7,13 @@
             overflow: hidden;
             height: 100%;
         }
-
         canvas {
             z-index: -1;
         }
-
         p {
             color: white;
             background-color: black;
         }
-
         #fps {
             position: absolute;
             padding: 0;
@@ -25,12 +22,12 @@
             text-align: center;
         }
     </style>
-    <title>gradients</title>
+    <title>water</title>
 </head>
 
 <body>
 <div id="container">
-    <p id="fps"></p>
+    <!--    <p id="fps"></p>-->
     <canvas id="canvas"></canvas>
 </div>
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
@@ -39,7 +36,6 @@
     let canvas = document.getElementById("canvas");
     let c = canvas.getContext("2d");
     let width, height;
-    let colorBackground = '#1D4D7A';
 
     function updateCanvasSize() {
         width = window.innerWidth;
@@ -49,13 +45,15 @@
     }
 
     function update(time) {
-        document.getElementById("fps").innerHTML = averageFps();
-        time *= 0.0005;
+        // document.getElementById("fps").innerHTML = averageFps();
+        time *= 0.01;
         updateCanvasSize();
         c.resetTransform();
         c.clearRect(0, 0, width, height);
-        c.fillStyle = colorBackground;
+        c.fillStyle = '#2F2F2F';
         c.fillRect(0, 0, width, height);
+        c.strokeStyle = '#FFFFFF'
+        c.lineWidth = 5;
         animate(time);
         requestAnimationFrame(update);
     }
@@ -63,29 +61,30 @@
     requestAnimationFrame(update);
 
     function animate(time) {
+        time += 1000;
+        time *= 0.5;
         let count = 50;
-        let radius = 100;
-        var gradient = c.createLinearGradient(0, -radius, 0, radius);
-        gradient.addColorStop(0, "red");
-        gradient.addColorStop(1, "white");
-
-        setTransform(c, width / 2, height / 2);
-        c.lineWidth = 10;
-        c.strokeStyle = gradient;
-        c.beginPath();
-        for (let i = 1; i < count; i++) {
-            let iNorm = map(i, 1, count - 1, 0, 1);
-            let x = radius * Math.sin(iNorm * Math.PI * 2);
-            let y = radius * Math.cos(iNorm * Math.PI * 2);
-            if (i === 0) {
-                c.moveTo(x, y);
-            } else {
-                c.lineTo(x, y);
+        let margin = -20;
+        for(let lineIndex = 0; lineIndex < count; lineIndex++) {
+            let lineNorm = map(lineIndex, 0, count-1, 0, 1);
+            let detail = width / 8;
+            c.beginPath();
+            let yCenter = margin + lineNorm * (height - margin * 2);
+            let yVariation = 10 + lineNorm * 10;
+            let ySpeed = (cos(lineNorm*10000+time*0.001)) * time * ((lineIndex % 2 === 0) ? -1 : 1);
+            for (let vertexIndex = 1; vertexIndex < detail; vertexIndex++) {
+                let vertNorm = map(vertexIndex, 1, detail - 1, 0, 1);
+                let x = vertNorm * width;
+                let yWave = vertNorm * TAU * 4;
+                let y = yCenter + yVariation * cos(yWave + ySpeed);
+                if (vertexIndex === 0) {
+                    c.moveTo(x, y);
+                } else {
+                    c.lineTo(x, y);
+                }
             }
+            c.stroke();
         }
-        c.closePath();
-        c.stroke();
-        c.resetTransform();
     }
 
 </script>

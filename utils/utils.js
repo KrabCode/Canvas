@@ -1,4 +1,27 @@
 // utils
+let PI = Math.PI;
+let TAU = Math.PI * 2;
+
+function pow(x, p) {
+    return Math.pow(x, p);
+}
+
+function cos(x) {
+    return Math.cos(x);
+}
+
+function sin(x) {
+    return Math.sin(x);
+}
+
+function max(a, b) {
+    return Math.max(a, b);
+}
+
+function min(a, b) {
+    return Math.min(a, b);
+}
+
 function map(n, start1, stop1, start2, stop2) {
     return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
 }

@@ -16,8 +16,8 @@
 
 <body>
   <div id="container">
-      <p id="fps"></p>
-  <canvas id="canvas"></canvas>
+    <p id="fps"></p>
+    <canvas id="canvas"></canvas>
   </div>
   <script type="text/javascript" src="https://livejs.com/live.js"></script>
   <script type="text/javascript" src="../utils/utils.js"></script>
@@ -25,7 +25,7 @@
       let canvas = document.getElementById("canvas");
       let c = canvas.getContext("2d");
       let width, height;
-      let frameCount = 0;
+
       let colorBackground = {
         r: 18,
         g: 40,
@@ -46,7 +46,6 @@
 
       function update(time){
         document.getElementById("fps").innerHTML = averageFps();
-        frameCount++;
         time *= 0.0005;
         updateCanvasSize();
         c.resetTransform();

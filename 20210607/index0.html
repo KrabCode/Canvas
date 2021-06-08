@@ -2,11 +2,23 @@
 <head>
     <style>
       body, html {padding: 0; margin: 0; overflow: hidden; height:100%;}
+      canvas { z-index: -1;}
+      p {color: white; background-color: black;}
+
+      #container {
+        position: relative;
+      }
+      #container canvas, #overlay {
+        position: absolute;
+      }
     </style>
 </head>
 
 <body>
-  <canvas id="canvas"/>
+  <div id="container">
+  <canvas id="canvas"></canvas>
+    <p id="fps" ></p>
+  </div>
 </body>
 <script type="application/x-javascript">
   // utils
@@ -25,7 +37,7 @@
       return 'rgba(' + r +',' + g +','+ b +',1)';
   }
 
-  function rgba(x){
+  function color(x){
     return 'rgba(' + x.r +',' + x.g +','+ x.b +',1)'
   }
 
@@ -37,16 +49,15 @@
 
 </script>
 <script type="application/javascript">
-    let frameCount = 0;
-    let c, w, h;
     let canvas = document.getElementById("canvas");
-    c = canvas.getContext("2d");
+    let c = canvas.getContext("2d");
+    let width, height;
+    let frameCount = 0;
     let colorBackground = {
       r: 12,
-      g: 80,
-      b: 160
+      g: 40,
+      b: 132
     }
-    let color = 'rgba()'
     let colorForeground = {
       r: 255,
       g: 255,
@@ -60,61 +71,44 @@
         canvas.height = height;
     }
 
+
     function update(time){
+      updateFps();
       frameCount++;
       time *= 0.001;
       updateCanvasSize();
       c.resetTransform();
       c.clearRect(0,0,width,height);
-      c.fillStyle = rgba(colorBackground);
+      c.fillStyle = color(colorBackground);
       c.fillRect(0,0, width, height);
-
       drawInnerMandala(time);
-      drawMiddlePlanets(time);
-
       requestAnimationFrame(update);
     }
 
-    function drawMiddlePlanets(time){
-      let count = 80;
-      let maxSize = 40;
-      for(let i = 0; i < count; i++){
-        let iNorm = map(i, 0, count - 1, 0, 1);
-        let theta = Math.PI * 40 * iNorm - time;
-        let radius = 400;
-        let x = radius * Math.cos(theta);
-        let y = radius * Math.sin(theta);
-        c.fillStyle = lerpColor(colorBackground, colorForeground, Math.pow(1-iNorm,2.5));
-        setTransform(c, width / 2, height / 2);
-        c.translate(x, y);
-        let size = maxSize-iNorm*maxSize;
-        if(size < 5){
-          continue;
-        }
-        for(let corner = 0; corner < 1; corner++){
-          c.fillRect(0,0,size,size);
-        }
-      }
-      c.resetTransform();
+        var lastLoop = new Date();
+    function updateFps(){
+      var thisLoop = new Date();
+      var fps = 1000 / (thisLoop - lastLoop);
+      lastLoop = thisLoop;
+      document.getElementById("fps").innerHTML = fps;
     }
 
     function drawInnerMandala(time){
       let count = 100;
-      let maxSize = 300;
+      let maxSize = 200;
       for(let i = 1; i < count; i++){
         setTransform(c, width / 2, height / 2);
         let iNorm = map(i, 1, count-1, 0, 1);
         c.rotate(iNorm * Math.PI * 30 * Math.cos(time*0.1));
         let size = maxSize-iNorm*maxSize;
-        c.strokeStyle = lerpColor(colorBackground, colorForeground, Math.pow(1-iNorm, 0.3));
+        c.strokeStyle = color(colorForeground);
         c.fillStyle = lerpColor(colorBackground, colorForeground, Math.pow(iNorm, 0.9));
         c.beginPath();
-        c.lineWidth = 6+iNorm*6;
+
+        c.lineWidth = 3+iNorm*5;
         c.lineTo(size, 0);
-        for(let corner = 0; corner < 4; corner++){
-          c.rotate(Math.PI / 2);
-          c.lineTo(size, 0);
-        }
+        c.fillRect(-size,-size, size*2, size*2);
+        c.strokeRect(-size,-size, size*2, size*2);
         c.fill();
         c.stroke();
       }
@@ -125,6 +119,5 @@
       c.setTransform(1, 0, 0, 1, x, y);
     }
     requestAnimationFrame(update);
-
 
 </script>

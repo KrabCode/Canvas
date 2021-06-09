@@ -71,3 +71,12 @@ function averageFps() {
 function setTransform(c, x, y) {
     c.setTransform(1, 0, 0, 1, x, y);
 }
+
+// https://stackoverflow.com/questions/45070033/replace-html-title-with-file-name
+function setTitleToFilename() {
+    let url = window.location.pathname; // gets the pathname of the file
+    let str = url.substring(url.lastIndexOf('/') + 1); // removes everything before the filename
+    str = str.substring(0, str.length - 5); // removes the extension
+     // if the filename has multiple words separated by spaces, browsers do not like that and replace each space with a %20. This replaces %20 with a space.
+    document.getElementById("title").innerHTML = str.replace(/%20/g, " ");
+}

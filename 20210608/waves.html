@@ -7,13 +7,17 @@
             overflow: hidden;
             height: 100%;
         }
+
         canvas {
             z-index: -1;
+            webkitFilter : "blur(3px)";
         }
+
         p {
             color: white;
             background-color: black;
         }
+
         #fps {
             position: absolute;
             padding: 0;
@@ -22,12 +26,12 @@
             text-align: center;
         }
     </style>
-    <title>water</title>
+    <title id="title"></title>
 </head>
 
 <body>
 <div id="container">
-    <!--    <p id="fps"></p>-->
+    <p id="fps"></p>
     <canvas id="canvas"></canvas>
 </div>
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
@@ -36,6 +40,7 @@
     let canvas = document.getElementById("canvas");
     let c = canvas.getContext("2d");
     let width, height;
+    setTitleToFilename();
 
     function updateCanvasSize() {
         width = window.innerWidth;
@@ -45,15 +50,15 @@
     }
 
     function update(time) {
-        // document.getElementById("fps").innerHTML = averageFps();
+        document.getElementById("fps").innerHTML = averageFps();
         time *= 0.01;
         updateCanvasSize();
         c.resetTransform();
         c.clearRect(0, 0, width, height);
-        c.fillStyle = '#2F2F2F';
+        c.fillStyle = '#495B9B' ;
         c.fillRect(0, 0, width, height);
         c.strokeStyle = '#FFFFFF'
-        c.lineWidth = 5;
+        c.lineWidth = 2;
         animate(time);
         requestAnimationFrame(update);
     }
@@ -63,15 +68,15 @@
     function animate(time) {
         time += 1000;
         time *= 0.5;
-        let count = 50;
-        let margin = -20;
-        for(let lineIndex = 0; lineIndex < count; lineIndex++) {
-            let lineNorm = map(lineIndex, 0, count-1, 0, 1);
-            let detail = width / 8;
+        let count = 100;
+        let margin = 200;
+        for (let lineIndex = 0; lineIndex < count; lineIndex++) {
+            let lineNorm = map(lineIndex, 0, count - 1, 0, 1);
+            let detail = width / 30;
             c.beginPath();
             let yCenter = margin + lineNorm * (height - margin * 2);
-            let yVariation = 10 + lineNorm * 10;
-            let ySpeed = (cos(lineNorm*10000+time*0.001)) * time * ((lineIndex % 2 === 0) ? -1 : 1);
+            let yVariation = 2 + lineNorm * 20;
+            let ySpeed = cos(lineNorm * 100 + sin(time * 0.5 + lineNorm * 2.5));
             for (let vertexIndex = 1; vertexIndex < detail; vertexIndex++) {
                 let vertNorm = map(vertexIndex, 1, detail - 1, 0, 1);
                 let x = vertNorm * width;

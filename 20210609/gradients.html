@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<head>
+    <style>
+        body, html {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        canvas {
+            z-index: -1;
+        }
+
+        p {
+            color: white;
+            background-color: black;
+        }
+
+        #fps {
+            position: absolute;
+            padding: 0;
+            margin: 0;
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+    <title id="title"></title>
+</head>
+
+<body>
+<div id="container">
+    <p id="fps"></p>
+    <canvas id="canvas"></canvas>
+</div>
+<script type="text/javascript" src="https://livejs.com/live.js"></script>
+<script type="text/javascript" src="../utils/utils.js"></script>
+<script type="application/javascript">
+    let canvas = document.getElementById("canvas");
+    let c = canvas.getContext("2d");
+    let width, height;
+    setTitleToFilename();
+
+    function updateCanvasSize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+    function update(time) {
+        document.getElementById("fps").innerHTML = averageFps();
+        time *= 0.01;
+        updateCanvasSize();
+        c.resetTransform();
+        c.clearRect(0, 0, width, height);
+        c.fillStyle = '#495B9B';
+        c.fillRect(0, 0, width, height);
+        c.strokeStyle = '#FFFFFF';
+        c.lineWidth = 4;
+        animate(time);
+        requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
+
+    function animate(time) {
+        let margin = 100;
+        let detail = 1000;
+
+        for (let vertexIndex = 0; vertexIndex < detail; vertexIndex++) {
+            let vertNorm = map(vertexIndex, 0, detail - 1, 0, 1);
+            let x = margin + (width - margin * 2) * vertNorm;
+            let yBase = height / 2;
+            let ySize = 100;
+            let y0 = yBase - ySize - 60*sin(0.01*x + PI);
+            let y1 = yBase + ySize + 60*sin(0.01*x);
+            let gradient = c.createLinearGradient(x, y0, x, y1);
+            gradient.addColorStop(0, '#F7F6FF');
+            gradient.addColorStop(0.5, '#30307A');
+            gradient.addColorStop(1, '#080A27');
+            c.strokeStyle = gradient;
+            c.beginPath();
+            c.moveTo(x,y0);
+            c.lineTo(x,y1);
+            c.stroke();
+        }
+    }
+
+</script>
+</body>

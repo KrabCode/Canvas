@@ -10,7 +10,6 @@
 
         canvas {
             z-index: -1;
-            webkitFilter : "blur(3px)";
         }
 
         p {
@@ -55,9 +54,9 @@
         updateCanvasSize();
         c.resetTransform();
         c.clearRect(0, 0, width, height);
-        c.fillStyle = '#495B9B' ;
+        c.fillStyle = '#495B9B';
         c.fillRect(0, 0, width, height);
-        c.strokeStyle = '#FFFFFF'
+        c.strokeStyle = '#FFFFFF';
         c.lineWidth = 2;
         animate(time);
         requestAnimationFrame(update);
@@ -68,15 +67,15 @@
     function animate(time) {
         time += 1000;
         time *= 0.5;
-        let count = 100;
-        let margin = 200;
+        let count = 50;
+        let margin = 100;
         for (let lineIndex = 0; lineIndex < count; lineIndex++) {
             let lineNorm = map(lineIndex, 0, count - 1, 0, 1);
             let detail = width / 30;
             c.beginPath();
             let yCenter = margin + lineNorm * (height - margin * 2);
-            let yVariation = 2 + lineNorm * 20;
-            let ySpeed = cos(lineNorm * 100 + sin(time * 0.5 + lineNorm * 2.5));
+            let yVariation = 10 + lineNorm * 10;
+            let ySpeed = cos(lineNorm * 1000 + sin(time * 0.5 + lineNorm * 2.5));
             for (let vertexIndex = 1; vertexIndex < detail; vertexIndex++) {
                 let vertNorm = map(vertexIndex, 1, detail - 1, 0, 1);
                 let x = vertNorm * width;

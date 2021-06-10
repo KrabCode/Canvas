@@ -34,7 +34,7 @@
     <canvas id="canvas"></canvas>
 </div>
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
-<script type="text/javascript" src="../utils/utils.js"></script>
+<script type="text/javascript" src="../../../utils/utils.js"></script>
 <script id="vertex-shader-2d" type="x-shader/x-vertex">#version 300 es
 in vec4 a_position;
 
@@ -48,54 +48,95 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform float u_time;
-
 out vec4 fragColor;
-const int colorsPerGradient = 5;
 
-//--------------------------------------GRADIENT-----------------------------------
-//--------------------------------color point array logic--------------------------
-//-------------------------------------by Krabcode---------------------------------
+const float PI = 3.14159;
+const int octaves = 10;
 
-struct colorPoint
-{
-    float pos;
-    vec3 val;
-};
+// Simplex 3D Noise
+// by Ian McEwan, Ashima Arts
+//
+vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+float simplexNoise(vec3 v){
+    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
 
-colorPoint emptyColorPoint()
-{
-    return colorPoint(1.1, vec3(1., 0., 0.));
+    // First corner
+    vec3 i = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+
+    // Other corners
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+
+    // x0 = x0 - 0. + 0.0 * C
+    vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+    vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+    vec3 x3 = x0 - 1. + 3.0 * C.xxx;
+
+    // Permutations
+    i = mod(i, 289.0);
+    vec4 p = permute(permute(permute(
+    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+    + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+    + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+    // Gradients
+    // ( N*N points uniformly over a square, mapped onto an octahedron.)
+    float n_ = 1.0/7.0;// N=7
+    vec3 ns = n_ * D.wyz - D.xzx;
+
+    vec4 j = p - 49.0 * floor(p * ns.z *ns.z);// mod(p,N*N)
+
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);// mod(j,N)
+
+    vec4 x = x_ *ns.x + ns.yyyy;
+    vec4 y = y_ *ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+
+    vec4 s0 = floor(b0)*2.0 + 1.0;
+    vec4 s1 = floor(b1)*2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+
+    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+
+    vec3 p0 = vec3(a0.xy, h.x);
+    vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z);
+    vec3 p3 = vec3(a1.zw, h.w);
+
+    //Normalise gradients
+    vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+    p0 *= norm.x;
+    p1 *= norm.y;
+    p2 *= norm.z;
+    p3 *= norm.w;
+
+    // Mix final noise value
+    vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m*m, vec4(dot(p0, x0), dot(p1, x1),
+    dot(p2, x2), dot(p3, x3)));
 }
 
-float map(float value, float start1, float stop1, float start2, float stop2)
-{
-    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
-}
-
-float norm(float value, float start, float stop)
-{
-    return map(value, start, stop, 0., 1.);
-}
-
-int findClosestLeftNeighbourIndex(float pos, colorPoint[colorsPerGradient] gradient)
-{
-    for (int i = 0; i < colorsPerGradient; i++){
-        if (pos >= gradient[i].pos && pos <= gradient[i+1].pos){
-            return i;
-        }
+float simplexFbm(vec3 v){
+    float sum = 0.;
+    float amp = 1.;
+    float frq = 1.;
+    for (int i = 0; i < octaves; i++){
+        sum += amp*simplexNoise(v * frq);
+        amp *= 0.5;
+        frq *= 2.;
     }
-    return 0;
-}
-
-vec3 gradientColorAt(float normalizedPos, colorPoint[colorsPerGradient] gradient)
-{
-    float pos = clamp(normalizedPos, 0., 1.);
-    int leftIndex = findClosestLeftNeighbourIndex(pos, gradient);
-    int rightIndex = leftIndex + 1;
-    colorPoint A = gradient[leftIndex];
-    colorPoint B = gradient[rightIndex];
-    float normalizedPosBetweenNeighbours = norm(pos, A.pos, B.pos);
-    return mix(A.val, B.val, normalizedPosBetweenNeighbours);
+    return sum;
 }
 
 vec3 hexToRgb(int color)
@@ -106,30 +147,30 @@ vec3 hexToRgb(int color)
     return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
 }
 
-vec3 gammaCorrection(vec3 rgb){
-    return pow(smoothstep(0., 1., rgb), vec3(1.0/2.2));
+vec3 render(vec2 uv){
+    float t = u_time * 0.0001;
+    vec3 noiseCoord = vec3(uv.x*1., uv.y*80. + t * 0.5, t);
+    uv.y += simplexFbm(noiseCoord);
+    float s = smoothstep(0., 0.1, uv.y);
+    vec3 colorA = hexToRgb(0xFFFFFF);
+    vec3 colorB = hexToRgb(0x10233C);
+    return mix(colorA, colorB, s);
 }
 
-vec4 gammaCorrection(vec4 rgba){
-    return vec4(gammaCorrection(rgba.rgb), 1.);
+vec3 renderAA(vec2 uv){
+    vec2 p = vec2(1./u_resolution.x, 1./u_resolution.y) / 3.;
+    vec3 c1 = render(uv+vec2(-p.x, p.y)).rgb;
+    vec3 c2 = render(uv+vec2(p.x, -p.y)).rgb;
+    vec3 c3 = render(uv+vec2(p.x, p.y)).rgb;
+    vec3 c4 = render(uv+vec2(-p.x, -p.y)).rgb;
+    vec3 c = (c1+c2+c3+c4) / 4.;
+    return c;
 }
 
 void main() {
-    float t = u_time * 0.01;
+    float t = u_time*0.001;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    uv.y += 0.1*sin(uv.x*10.);
-    uv.y = fract(uv.y * 5.);
-
-
-    colorPoint[colorsPerGradient] gradient = colorPoint[](
-        colorPoint(0.0, hexToRgb(0x1b262c)),
-        colorPoint(0.2, hexToRgb(0x1b262c)),
-        colorPoint(0.4, hexToRgb(0xbbe1fa)),
-        colorPoint(0.6, hexToRgb(0x3282b8)),
-        colorPoint(1.,hexToRgb(0x1b262c)));
-
-    vec3 clr = gradientColorAt(uv.y, gradient);
-    fragColor = vec4(clr, 1);
+    fragColor = vec4(renderAA(uv), 1.0);
 }
 </script>
 <script type="application/javascript">
@@ -143,6 +184,7 @@ void main() {
         gl = canvas.getContext("webgl2");
         if (!gl) {
             alert("webgl is not supported by your browser");
+            return;
         }
         let vertexShaderSource = document.querySelector("#vertex-shader-2d").text;
         let fragmentShaderSource = document.querySelector("#fragment-shader-2d").text;
@@ -158,6 +200,7 @@ void main() {
     setup();
 
     function update(time) {
+        document.querySelector("#fps").innerHTML = averageFps();
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);

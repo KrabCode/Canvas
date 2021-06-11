@@ -150,7 +150,7 @@ vec3 hexToRgb(int color){
     return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
 }
 
-const int COLORS_PER_GRADIENT = 4;
+const int COLORS_PER_GRADIENT = 5;
 vec3 mix(vec4[COLORS_PER_GRADIENT] gradient, float pct){
     pct = clamp(pct, 0., 1.);
     vec3 lerpedColor = vec3(1, 0, 0);

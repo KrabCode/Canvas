@@ -142,15 +142,15 @@ float simplexFbm(vec3 v){
 float map(float n, float start1, float stop1, float start2, float stop2){
     return ((n-start1)/(stop1-start1))*(stop2-start2)+start2;
 }
-vec3 hexToRgb(int color)
-{
+
+vec3 hexToRgb(int color){
     float rValue = float(color / 256 / 256);
     float gValue = float(color / 256 - int(rValue * 256.0));
     float bValue = float(color - int(rValue * 256.0 * 256.0) - int(gValue * 256.0));
     return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
 }
 
-const int COLORS_PER_GRADIENT = 5;
+const int COLORS_PER_GRADIENT = 4;
 vec3 mix(vec4[COLORS_PER_GRADIENT] gradient, float pct){
     pct = clamp(pct, 0., 1.);
     vec3 lerpedColor = vec3(1, 0, 0);
@@ -161,6 +161,10 @@ vec3 mix(vec4[COLORS_PER_GRADIENT] gradient, float pct){
         }
     }
     return lerpedColor;
+}
+
+float rand(vec2 co){
+    return -1.+2.*fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 vec3 render(vec2 uv){

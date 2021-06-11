@@ -150,12 +150,12 @@ vec3 hexToRgb(int color)
     return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
 }
 
-const int COLORS_PER_GRADIENT = 4;
+const int COLORS_PER_GRADIENT = 5;
 vec3 mix(vec4[COLORS_PER_GRADIENT] gradient, float pct){
     pct = clamp(pct, 0., 1.);
-    vec3 lerpedColor = vec3(1,0,0);
+    vec3 lerpedColor = vec3(1, 0, 0);
     for (int i = 0; i < COLORS_PER_GRADIENT-1; i++){
-        if (gradient[i].a <= pct && gradient[i+1].a >= pct || pct == 1.){
+        if (gradient[i].a <= pct && gradient[i+1].a >= pct){
             float norm = map(pct, gradient[i].a, gradient[i+1].a, 0., 1.);
             return mix(gradient[i].rgb, gradient[i+1].rgb, norm);
         }
@@ -164,15 +164,18 @@ vec3 mix(vec4[COLORS_PER_GRADIENT] gradient, float pct){
 }
 
 vec3 render(vec2 uv){
-    float t = u_time * 0.001;
-    float range = 0.2;
-    vec4[] globalGradient = vec4[](vec4(hexToRgb(0xFFF0FF), 0.),
-        vec4(hexToRgb(0x000000), range),
-        vec4(hexToRgb(0x000000), 1.-range),
-        vec4(hexToRgb(0xFFF0FF), 1.)
+    float t = u_time * 0.05;
+    float range = 0.4;
+    // https://colorhunt.co/palette/289629
+    vec4[] gradient = vec4[](
+        vec4(hexToRgb(0xd9d9d9), 0.),
+        vec4(hexToRgb(0xe88a1a), 0.25),
+        vec4(hexToRgb(0xcf3030), 0.5),
+        vec4(hexToRgb(0x141414), 0.95),
+        vec4(hexToRgb(0xd9d9d9), 1.)
     );
-    float localY = 0.5+0.5*sin(uv.y*20.+t + 0.5*cos(uv.x*10.+t + 0.5*sin(uv.y*60.) + 0.5*sin(uv.x*200.)));
-    vec3 localColor = mix(globalGradient, localY);
+    float pct = 0.5+0.5*sin(uv.y*20.+t + cos(uv.x*10. + t + sin(uv.x*30.+t) +uv.y*80. + sin(uv.x*100.)));
+    vec3 localColor = mix(gradient, pct);
     return localColor;
 }
 
@@ -187,7 +190,6 @@ vec3 renderAA(vec2 uv){
 }
 
 void main() {
-    float t = u_time*0.001;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
     fragColor = vec4(renderAA(uv), 1.0);
 }
@@ -218,6 +220,7 @@ void main() {
 
     setup();
 
+    let frameCount = 0;
     function update(time) {
         document.querySelector("#fps").innerHTML = averageFps();
         canvas.width = window.innerWidth;
@@ -243,7 +246,7 @@ void main() {
             0,          // start at the beginning of the buffer
         );
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform1f(timeUniformLocation, time);
+        gl.uniform1f(timeUniformLocation, frameCount++);
         gl.drawArrays(
             gl.TRIANGLES,
             0,     // offset

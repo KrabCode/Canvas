@@ -168,17 +168,17 @@ float rand(vec2 co){
 }
 
 vec3 render(vec2 uv){
-    float t = u_time * 0.05;
+    float t = u_time * 0.015;
     float range = 0.4;
     // https://colorhunt.co/palette/289629
     vec4[] gradient = vec4[](
         vec4(hexToRgb(0xd9d9d9), 0.),
         vec4(hexToRgb(0xe88a1a), 0.25),
         vec4(hexToRgb(0xcf3030), 0.5),
-        vec4(hexToRgb(0x141414), 0.95),
-        vec4(hexToRgb(0xd9d9d9), 1.)
+        vec4(hexToRgb(0x050505), 0.999),
+        vec4(hexToRgb(0x676473), 1.)
     );
-    float pct = 0.5+0.5*sin(uv.y*20.+t + cos(uv.x*10. + t + sin(uv.x*30.+t) +uv.y*80. + sin(uv.x*100.)));
+    float pct = 0.5+0.5*sin(uv.y*4.+t + cos(uv.x*2. + t + sin(uv.x*8.+t) +uv.y*20. + uv.x * 20. + sin(uv.x*20.)));
     vec3 localColor = mix(gradient, pct);
     return localColor;
 }

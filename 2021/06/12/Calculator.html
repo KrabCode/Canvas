@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="UTF-8">
+<style>
+    body {
+
+    }
+    .grid {
+        width: 400px;
+        display: grid;
+        gap: 5px;
+        font-size: 32px;
+    }
+
+    .grid-item {
+        border-style: solid;
+        border-width: 5px;
+        user-select: none;
+    }
+
+    .button {
+        text-align: center;
+        min-width: 50px;
+    }
+</style>
+<body>
+<div id="calculator">
+    <div id="oldNumber" style="height: 40px; width: 200px; margin: 10px; padding-right: 10px; border-style: dashed; border-width: 1px; font-size: 32px; text-align: end;"></div>
+    <div id="newNumber" style="height: 50px; width: 200px; margin: 10px; padding-right: 10px; border-style: dashed; border-width: 1px; font-size: 42px; text-align: end;"></div>
+    <div class="grid">
+        <div class="grid-item button" style="grid-row-start:1;" onclick="clearAll()">AC</div>
+        <div class="grid-item button" style=" grid-row-start:1;" onclick="deleteLastDigitInsideNewNumber()">C</div>
+        <div class="grid-item button" style="grid-row-start:3;" onclick="inputNumber(7)">7</div>
+        <div class="grid-item button" style="grid-row-start:3;" onclick="inputNumber(8)">8</div>
+        <div class="grid-item button" style="grid-row-start:3;" onclick="inputNumber(9)">9</div>
+        <div class="grid-item button" style="grid-row-start:4;" onclick="inputNumber(4)">4</div>
+        <div class="grid-item button" style="grid-row-start:4;" onclick="inputNumber(5)">5</div>
+        <div class="grid-item button" style="grid-row-start:4;" onclick="inputNumber(6)">6</div>
+        <div class="grid-item button" style="grid-row-start:5;" onclick="inputNumber(1)">1</div>
+        <div class="grid-item button" style="grid-row-start:5;" onclick="inputNumber(2)">2</div>
+        <div class="grid-item button" style="grid-row-start:5;" onclick="inputNumber(3)">3</div>
+        <div class="grid-item button" style="grid-row-start:6; grid-column-start: 2" onclick="inputNumber(0)">0</div>
+        <div class="grid-item button" id="divide"   style="grid-column-start: 5; grid-row-start: 3;" onclick="inputOperation('/')">/</div>
+        <div class="grid-item button" id="multiply" style="grid-column-start: 5; grid-row-start: 4;" onclick="inputOperation('*')">*</div>
+        <div class="grid-item button" id="subtract" style="grid-column-start: 5; grid-row-start: 5;" onclick="inputOperation('-')">-</div>
+        <div class="grid-item button" id="addition" style="grid-column-start: 5; grid-row-start: 6;" onclick="inputOperation('+')">+</div>
+        <div class="grid-item button" style="grid-column-start: 5; grid-row-start:8; " onclick="equals()">=</div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="https://livejs.com/live.js"></script>
+<script >
+    let oldNumber = document.querySelector("#oldNumber");
+    let newNumber = document.querySelector("#newNumber");
+    let divide = document.querySelector("#divide");
+    let multiply = document.querySelector("#multiply");
+    let subtract = document.querySelector("#subtract");
+    let add = document.querySelector("#addition");
+
+    let op = '';
+
+    function inputNumber(number) {
+        console.log(number);
+        newNumber.textContent += number;
+    }
+
+    function inputOperation(operation) {
+        console.log(operation);
+        if(oldNumber.textContent === '') {
+            oldNumber.textContent = newNumber.textContent;
+            newNumber.textContent = '';
+        }
+        newNumber.textContent = '';
+        updateOperationButtonColors(operation);
+        op = operation;
+    }
+
+    function updateOperationButtonColors(operation) {
+        add.style.color = 'black';
+        divide.style.color = 'black';
+        multiply.style.color = 'black';
+        subtract.style.color = 'black';
+        if(operation === '+') {
+            add.style.color = 'blue' ;
+        }
+        if(operation === '-') {
+            subtract.style.color= 'blue' ;
+        }
+        if(operation === '/') {
+            divide.style.color= 'blue' ;
+        }
+        if(operation === '*') {
+            multiply.style.color= 'blue' ;
+        }
+    }
+
+    function equals() {
+        console.log("=");
+        if(op === '' || oldNumber.textContent === '' || newNumber.textContent === '') {
+            console.log("u cray cray");
+            return;
+        }
+        let oldNum = parseInt(oldNumber.textContent);
+        let newNum = parseInt(newNumber.textContent);
+        let result;
+        if(op === '+') {
+            result = oldNum + newNum;
+        }
+        if(op === '-') {
+            result = oldNum - newNum;
+        }
+        if(op === '*') {
+            result = oldNum * newNum;
+        }
+        if(op === '/') {
+            result = oldNum / newNum;
+        }
+        oldNumber.textContent = result;
+    }
+
+    function deleteLastDigitInsideNewNumber() {
+        let len = newNumber.textContent.length;
+        if(len > 0) {
+            newNumber.textContent = newNumber.textContent.substr(0,len-1)
+        }
+    }
+    function clearAll() {
+        console.log("clear");
+        newNumber.textContent = '';
+        oldNumber.textContent = '';
+    }
+
+    window.addEventListener("keydown", function (event) {
+        if (event.defaultPrevented) {
+            return; // Do nothing if the event was already processed
+        }
+        let input = event.key;
+        console.log(input);
+        let numberInput = parseInt(input);
+        if(!isNaN(numberInput)) {
+            inputNumber(numberInput);
+            event.preventDefault();
+            return;
+        }
+        if(['+', '-','*', '/'].indexOf(input) > -1) {
+            inputOperation(input);
+        }
+        if(input === 'Enter') {
+            equals();
+        }
+        if(input === 'Delete') {
+            deleteLastDigitInsideNewNumber();
+        }
+
+        // Cancel the default action to avoid it being handled twice
+        event.preventDefault();
+    }, true);
+</script>
+</html>
+

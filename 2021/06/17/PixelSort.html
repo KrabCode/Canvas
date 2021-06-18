@@ -6,16 +6,8 @@
             padding: 0;
             margin: 0;
             height: 100%;
-            background-color: hsla(0, 0%, 30%, 1);
-        }
-
-        #canvas {
-            position: absolute;
             top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            margin: auto;
+            background-color: hsla(0, 0%, 30%, 1);
         }
 
         p {
@@ -28,81 +20,108 @@
         }
 
         li {
-            margin: 10px;
+            padding: 10px;
         }
 
-        #controls {
+        #canvas {
+            z-index: 1;
+            margin-left: 20px;
+        }
+
+        .controls {
+            z-index: 2;
             background-color: hsla(0, 0%, 0%, 0.5);
-            color: hsl(0, 0%, 90%);
-            position: absolute;
-            padding: 0;
-            margin: 5px;
-            font-size: 20px;
+            color: hsl(0, 0%, 100%);
+            margin-left: 20px;
+            max-width: 300px;
+            font-size: 30px;
+            padding: 10px;
         }
 
-        button, input {
-            background-color: hsla(0, 0%, 30%, 1);
-            color: white;
-            vertical-align: middle;
-            font-size: 20px;
+        button {
+            background-color: hsl(0, 0%, 20%);
+            color: hsl(0, 0%, 100%);
+            font-size: 30px;
         }
+
+        .footer {
+            position: absolute;
+            top: 0;
+            right: 20px;
+        }
+
 
     </style>
     <title id="title"></title>
 </head>
 
 <body>
-<div id="container">
-    <ul id="controls">
-        <!-- load image -->
-        <li>
-            <button onclick="document.getElementById('inputUploadImage').click()">Load image</button>
-            <input type="file" style="display:none" id="inputUploadImage" name="inputUploadImage" accept="image/*">
-        </li>
 
-        <!-- direction radio -->
-        <li>
-            <label for="up">
-                <input type="radio" name="direction" id="up"/>
-                up
-            </label>
-            <label for="down">
-                <input type="radio" name="direction" id="down" checked/>
-                down
-            </label>
-            <label for="left">
-                <input type="radio" name="direction" id="left"/>
-                left
-            </label>
-            <label for="right">
-                <input type="radio" name="direction" id="right"/>
-                right
-            </label>
-        </li>
+<ul class="controls">
+    <!-- load image -->
+    <li>
+        <button id="imagePickerButton" onclick="document.getElementById('imagePicker').click()">Load image</button>
+        <input type="file" style="display: none" id="imagePicker" accept="image/*">
+        <button onclick="reset()">reset</button>
+    </li>
+    <li>
 
-        <!-- speed slider -->
-        <li>
-            <label for="sortSpeedSlider">animate</label>
-            <input type="range" id="sortSpeedSlider" name="sortSpeedSlider"
-                   min="0" max="100" value="5">
-        </li>
+    </li>
 
-        <!-- fps-->
-        <li>
-            <label id="fps" style="horiz-align: right;"></label>
-        </li>
-    </ul>
-    <canvas id="canvas">Your browser doesn't support canvas</canvas>
+    <!-- direction radio -->
+    <li>
+        <label for="up">
+            <input type="radio" name="direction" id="up"/>
+            up
+        </label>
+        <label for="down">
+            <input type="radio" name="direction" id="down" checked/>
+            down
+        </label>
+        <br>
+        <label for="left">
+            <input type="radio" name="direction" id="left"/>
+            left
+        </label>
+        <label for="right">
+            <input type="radio" name="direction" id="right"/>
+            right
+        </label>
+    </li>
 
-</div>
+    <!-- threshold slider -->
+    <li>
+        <label for="thresholdSlider" style="position: relative; text-align: center"
+               class="sliderLabel">threshold</label>
+        <input type="range" style="position: relative; left: 0; width: 100%;" id="thresholdSlider" class="slider"
+               min="0" max="768" value="300">
+    </li>
+
+    <li>
+        <label for="randomnessSlider" style="position: relative; text-align: center"
+               class="sliderLabel">randomness</label>
+        <input type="range" style="position: relative; left: 0; width: 100%;" id="randomnessSlider" class="slider"
+               min="0" max="100" value="25">
+    </li>
+    <!-- fps-->
+</ul>
+<canvas id="canvas">Your browser doesn't support canvas</canvas>
+
+<ul class="controls footer">
+    <li>
+        <label id="fps" style="horiz-align: right;"></label>
+    </li>
+</ul>
+
+
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
 <script type="text/javascript" src="../../../utils/utils.js"></script>
 <script type="application/javascript">
     let canvas = document.getElementById("canvas");
     let c = canvas.getContext("2d");
-    let imageLoadInput = document.getElementById('inputUploadImage');
-    imageLoadInput.addEventListener('change', handleFiles, false);
-    let speedSlider = document.getElementById("sortSpeedSlider");
+    let imagePicker = document.getElementById('imagePicker');
+    let thresholdSlider = document.getElementById("thresholdSlider");
+    let randomnessSlider = document.getElementById("randomnessSlider");
     let width, height;
     let image, tempImage;
     image = new Image();
@@ -119,19 +138,27 @@
         pixelSortCanvas();
     }
 
+    function reset() {
+        canvas.width = image.width;
+        canvas.height = image.height;
+        c.drawImage(image, 0, 0);
+    }
+
     window.onload = function () {
         setTitleToFilename();
         requestAnimationFrame(update);
+        image.src = 'crabfire.jpg';
+        image.onload = function () {
+            reset();
+        }
+        imagePicker.addEventListener('change', handleFiles, false);
     }
 
     function handleFiles(e) {
         let file = e.target.files[0];
         let reader = new FileReader();
         image.onload = function () {
-
-            canvas.width = image.width;
-            canvas.height = image.height;
-            c.drawImage(image, 0, 0);
+            reset();
         }
         reader.onloadend = function () {
             image.src = reader.result;
@@ -139,7 +166,7 @@
         reader.readAsDataURL(file);
 
         // reset the input button so that the change event can fire with the same file again
-        imageLoadInput.value = null;
+        imagePicker.value = null;
     }
 
     function pixelSortCanvas() {
@@ -147,31 +174,33 @@
         let imageDataTemp = c.getImageData(0, 0, canvas.width, canvas.height);
         let pixelSource = imageData.data;
         let pixelTemp = imageDataTemp.data;
-        let sortSpeed = speedSlider.value / 100;
+        let threshold = thresholdSlider.value;
+        let randomness = randomnessSlider.value / 100;
         let direction = document.querySelector('input[name="direction"]:checked');
         if (direction === null) {
             return;
         }
         direction = direction.id;
-        console.log(direction);
         if (direction === 'left' || direction === 'right') {
             for (let y = 0; y < canvas.height; y++) {
                 let row = [];
                 for (let x = 0; x < canvas.width; x++) {
                     row.push(getPixel(pixelSource, x, y));
                 }
-                pixelSortList(row, sortSpeed, direction === 'left');
+                pixelSortList(row, direction === 'left', threshold, randomness);
                 for (let x = 0; x < canvas.width; x++) {
                     setPixel(pixelTemp, x, y, row[x]);
                 }
             }
-        } else if (direction === 'up' || direction === 'down') {
+        }
+
+        if (direction === 'up' || direction === 'down') {
             for (let x = 0; x < canvas.width; x++) {
                 let col = [];
                 for (let y = 0; y < canvas.height; y++) {
                     col.push(getPixel(pixelSource, x, y));
                 }
-                pixelSortList(col, sortSpeed, direction === 'up');
+                pixelSortList(col, direction === 'up', threshold, randomness);
                 for (let y = 0; y < canvas.height; y++) {
                     setPixel(pixelTemp, x, y, col[y]);
                 }
@@ -180,14 +209,18 @@
         c.putImageData(imageDataTemp, 0, 0);
     }
 
-    function pixelSortList(list, sortSpeed, reverse) {
+    function pixelSortList(list, reverse, threshold, randomness) {
         list.sort((pixelA, pixelB) => {
-            if (Math.random() > sortSpeed) {
-                return 0;
-            }
             let sumA = pixelA[0] + pixelA[1] + pixelA[2];
             let sumB = pixelB[0] + pixelB[1] + pixelB[2];
+            if (threshold < max(sumA, sumB)) {
+                return 0;
+            }
+            if (Math.random() < randomness) {
+                return 0;
+            }
             if (sumA > sumB) {
+                // return 0;
                 return reverse ? -1 : 1;
             }
             if (sumA < sumB) {
@@ -199,7 +232,7 @@
 
     function getPixel(pixels, x, y) {
         let i = (x + y * canvas.width) * 4;
-        return [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]];
+        return [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3], x, y];
     }
 
     function setPixel(pixels, x, y, rgba) {

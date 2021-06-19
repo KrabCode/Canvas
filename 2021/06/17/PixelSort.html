@@ -24,24 +24,20 @@
         }
 
         #canvas {
-            position: absolute;
+            position: relative;
             left: 270px;
             top: 20px;
             z-index: 1;
-
+            transition: 0.5s;
         }
 
         button {
             background-color: hsl(0, 0%, 20%);
             color: hsl(0, 0%, 100%);
-            font-size: 30px;
+            font-size: 20px;
+            margin: 5px;
         }
 
-        .footer {
-            position: absolute;
-            top: 0;
-            right: 20px;
-        }
 
         .mainGuiList {
             padding: 10px;
@@ -93,14 +89,15 @@
 
         /* Position and style the open button (top left corner) */
         .openbtn {
-            padding: 8px 8px 8px 32px;
+            padding: 4px;
             text-decoration: none;
             color: #818181;
             display: block;
             transition: 0.3s;
             position: absolute;
             top: 0;
-            font-size: 36px;
+            font-size: 20px;
+            z-index: 0;
         }
 
         .openbtn:hover {
@@ -222,11 +219,13 @@
     /* Set the width of the side navigation to 250px */
     function openNav() {
         document.getElementById("mySidenav").style.width = "250px";
+        document.getElementById("canvas").style.left = "270px";
     }
 
     /* Set the width of the side navigation to 0 */
     function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
+        document.getElementById("canvas").style.left = "20px";
     }
 
     function update(time) {

@@ -1,16 +1,17 @@
 <!DOCTYPE HTML>
 <head>
-    <title></title>
+    <title>Canvas</title>
 </head>
+
 <body>
-    <h1>Krab's canvas sketches</h1>
-    <ul id="directoryList" style=""></ul>
+<h1>Krab's canvas sketches</h1>
+<ul id="directoryList" style=""></ul>
 </body>
 
 <style>
     body {
         color: white;
-        background-color: hsl(0,0%,10%);
+        background-color: hsl(0, 0%, 10%);
         margin: 30px;
     }
 
@@ -25,24 +26,23 @@
     li {
         list-style-type: circle;
         color: white;
-        padding : 5px;
+        padding: 5px;
     }
 
     li:hover {
         list-style-type: disc;
     }
 
-
     a {
-        color: hsl(0,0%,80%);
+        color: hsl(0, 0%, 80%);
     }
 
     a:visited {
-        color: hsl(0,0%,60%);
+        color: hsl(0, 0%, 60%);
     }
 
     a:hover {
-        color: hsl(0,0%,100%);
+        color: hsl(0, 0%, 100%);
     }
 </style>
 
@@ -54,9 +54,9 @@
         masterBranch = await masterBranch.json();
         console.log(masterBranch);
         let dir = document.getElementById("directoryList");
-        for(let i = masterBranch.tree.length-1; i > 0; i--) {
+        for (let i = masterBranch.tree.length - 1; i > 0; i--) {
             let path = masterBranch.tree[i].path;
-            if(path.endsWith("html") && path !== 'index.html' && !path.startsWith('templates')){
+            if (path.endsWith("html") && path !== 'index.html' && !path.startsWith('templates')) {
                 let li = document.createElement("li");
                 let a = document.createElement("a");
                 a.textContent = path.replace(".html", "")

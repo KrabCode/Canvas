@@ -236,8 +236,11 @@
     }
 
     function animate(time) {
-        c.globalAlpha = alphaSlider.value / 100;
-        c.drawImage(image, 0, 0);
+        let a = alphaSlider.value / 100;
+        if(a > 0) {
+            c.globalAlpha = a;
+            c.drawImage(image, 0, 0);
+        }
         c.globalAlpha = 1;
         pixelSortCanvas();
     }
@@ -315,7 +318,7 @@
 
     function pixelSortList(list, reverse, threshold, randomness) {
         list.sort((pixelA, pixelB) => {
-            let sumA = pixelA[0] * 3 + pixelA[1] + pixelA[2];
+            let sumA = pixelA[0] + pixelA[1] + pixelA[2];
             let sumB = pixelB[0] + pixelB[1] + pixelB[2];
             if (threshold < max(sumA, sumB)) {
                 return 0;

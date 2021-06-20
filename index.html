@@ -4,24 +4,56 @@
 </head>
 
 <body>
-<h1 id="header">HTML5 Canvas sketches</h1>
-<p><a href="https://github.com/KrabCode/Canvas">github</a></p>
+
+<div id="headerPlate">
+    <a href="https://github.com/KrabCode"> <img src="crabfire.jpg" alt="Krab"/></a>
+    <div id="namePlate">
+        <h1 id="header">Krab's sketchbook</h1>
+        <p>html, js, glsl</p>
+        <p><a href="https://github.com/KrabCode/Canvas">github</a></p>
+    </div>
+</div>
+
 <ul id="directoryList" style=""></ul>
 </body>
 
 <style>
     body {
-        color: red;
+        font-family: "Calibri", sans-serif;
+        color: white;
         background-color: hsl(0, 0%, 10%);
-        margin: 30px;
+        margin: 60px;
+    }
+
+    #headerPlate {
+        background-color: hsl(0, 0%, 15%);
+        padding: 30px;
+        height: 160px;
+
+    }
+
+    #namePlate {
+        background-color: hsl(0, 0%, 22%);
+        position: absolute;
+        left: 300px;
+        top: 90px;
+        height: 160px;
+        line-height: 24px;
+        padding-right: 100px;
+        padding-left: 16px;
+    }
+
+    img {
+        /*float: left;*/
+        height: 160px;
+    }
+
+    p {
+        font-size: 24px;
     }
 
     ul {
-        font-size: 32px;
-    }
-
-    ul:hover {
-
+        font-size: 34px;
     }
 
     li {
@@ -50,12 +82,14 @@
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
 <script>
 
+    let dir = document.getElementById("directoryList");
+    let thisRepo;
+
     async function load() {
-        let masterBranch = await fetch("https://api.github.com/repos/krabcode/canvas/git/trees/master?recursive=1");
-        masterBranch = await masterBranch.json();
-        let dir = document.getElementById("directoryList");
-        for (let i = masterBranch.tree.length - 1; i > 0; i--) {
-            let path = masterBranch.tree[i].path;
+        thisRepo = await fetch("https://api.github.com/repos/krabcode/canvas/git/trees/master?recursive=1");
+        thisRepo = await thisRepo.json();
+        for (let i = thisRepo.tree.length - 1; i > 0; i--) {
+            let path = thisRepo.tree[i].path;
             if (path.endsWith("html") && path !== 'index.html' && !path.startsWith('templates')) {
                 let li = document.createElement("li");
                 let a = document.createElement("a");

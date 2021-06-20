@@ -4,13 +4,14 @@
 </head>
 
 <body>
-<h1>Krab's canvas sketches</h1>
+<h1 id="header">HTML5 Canvas sketches</h1>
+<p><a href="https://github.com/KrabCode/Canvas">github</a></p>
 <ul id="directoryList" style=""></ul>
 </body>
 
 <style>
     body {
-        color: white;
+        color: red;
         background-color: hsl(0, 0%, 10%);
         margin: 30px;
     }
@@ -52,7 +53,6 @@
     async function load() {
         let masterBranch = await fetch("https://api.github.com/repos/krabcode/canvas/git/trees/master?recursive=1");
         masterBranch = await masterBranch.json();
-        console.log(masterBranch);
         let dir = document.getElementById("directoryList");
         for (let i = masterBranch.tree.length - 1; i > 0; i--) {
             let path = masterBranch.tree[i].path;
@@ -71,5 +71,14 @@
     }
 
     load();
+
+    function animate(time) {
+        time = time * 0.1;
+        let header = document.getElementById("header");
+        header.style.color = 'hsl(' + time + ', 100%, 80%)';
+        requestAnimationFrame(animate)
+    }
+
+    requestAnimationFrame(animate);
 
 </script>

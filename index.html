@@ -1,12 +1,50 @@
 <!DOCTYPE HTML>
 <head>
+    <title></title>
 </head>
-<body style="background: hsl(0,0%,12%); color:white; ">
+<body>
     <h1>Krab's canvas sketches</h1>
-    <ul class="dir" id="directoryList" style="font-size: 32px; list-style-type: none; margin: 30px">
-
-    </ul>
+    <ul id="directoryList" style=""></ul>
 </body>
+
+<style>
+    body {
+        color: white;
+        background-color: hsl(0,0%,10%);
+        margin: 30px;
+    }
+
+    ul {
+        font-size: 32px;
+    }
+
+    ul:hover {
+
+    }
+
+    li {
+        list-style-type: circle;
+        color: white;
+        padding : 5px;
+    }
+
+    li:hover {
+        list-style-type: disc;
+    }
+
+
+    a {
+        color: hsl(0,0%,80%);
+    }
+
+    a:visited {
+        color: hsl(0,0%,60%);
+    }
+
+    a:hover {
+        color: hsl(0,0%,100%);
+    }
+</style>
 
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
 <script>
@@ -26,8 +64,6 @@
                     .replace("/", "-")
                     .replace("/", " ");
                 a.href = path;
-
-                li.style.padding = "5px";
                 li.appendChild(a);
                 dir.appendChild(li);
             }

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallpaper</title>
+    <style>
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100%;
+        }
+
+        img {
+            display: none;
+        }
+
+        #canvas {
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas">Your browser doesn't support canvas</canvas>
+
+
+<script type="text/javascript" src="https://livejs.com/live.js"></script>
+<script type="text/javascript" src="../../../utils/utils.js"></script>
+<script type="text/javascript">
+    let canvas = document.getElementById("canvas");
+    let c = canvas.getContext("2d");
+
+    let images = [];
+    let stars = [];
+
+    let imagesLoadedCount = 0;
+    let imageCount = 6;
+
+    function onAllImagesLoaded() {
+        imagesLoadedCount++;
+        if (imagesLoadedCount < imageCount) {
+            return;
+        }
+        images[0] = document.getElementById("imgStar1");
+        images[1] = document.getElementById("imgStar2");
+        images[2] = document.getElementById("imgStar3");
+        images[3] = document.getElementById("imgStar4");
+        images[4] = document.getElementById("imgSun");
+        images[5] = document.getElementById("imgPlanet");
+        console.log("all images loaded");
+        generateStars();
+        modifyImages();
+    }
+
+    function generateStars() {
+        let starCount = 20;
+        for (let i = 0; i < starCount; i++) {
+            let star = {
+                x: Math.random(),
+                y: Math.random(),
+                rotationOffset: Math.random(),
+                rotationSpeed: -1 + 2 * Math.random(),
+                imageIndex: Math.floor(Math.random() * 4)
+            };
+            stars.push(star);
+        }
+    }
+
+    function getImage(id) {
+        switch (id) {
+            case 'imgStar1': {
+                return images[0];
+            }
+            case 'imgStar2': {
+                return images[1];
+            }
+            case 'imgStar3': {
+                return images[2];
+            }
+            case 'imgStar4': {
+                return images[3];
+            }
+            case 'imgSun': {
+                return images[4];
+            }
+            case 'imgPlanet': {
+                return images[5];
+            }
+        }
+    }
+
+    function smoothstep(min, max, value) {
+        var x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+        return x * x * (3 - 2 * x);
+    }
+
+    function modifyImages() {
+        for (let i = 0; i < images.length; i++) {
+            let img = images[i];
+            let tempCanvas = document.createElement('canvas');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            let tempCtx = tempCanvas.getContext("2d");
+            tempCtx.drawImage(img, 0, 0);
+            let imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+            let data = imageData.data;
+            for (let j = 0; j < data.length; j += 4) {
+                let red = data[j];
+                let green = data[j + 1];
+                let blue = data[j + 2];
+                let avg = ((red + green + blue) / 3) / 255;
+                avg = smoothstep(0.0, 0.5, avg);
+                avg = 1 - avg;
+                avg *= 255;
+
+                data[j] = avg;
+                data[j + 1] = avg;
+                data[j + 2] = avg;
+                data[j + 3] = avg;
+            }
+            tempCtx.putImageData(imageData, 0, 0);
+            images[i] = tempCanvas;
+        }
+        requestAnimationFrame(update);
+    }
+
+    let frameCount = 0;
+
+    function update(time) {
+        time *= 0.0005;
+        frameCount++;
+        let w = document.body.clientWidth;
+        let h = document.body.clientHeight;
+        canvas.width = w;
+        canvas.height = h;
+        c.resetTransform();
+        c.clearRect(0, 0, w, h);
+        c.fillStyle = '#2B2B2B';
+        c.rect(0, 0, w, h);
+        c.fill();
+
+
+        for (let i = 0; i < stars.length; i++) {
+            let star = stars[i];
+            let scl = 0.15;
+            c.setTransform(scl, 0, 0, scl, star.x * w, star.y * h);
+            c.rotate(star.rotationOffset + star.rotationSpeed * time);
+            let img = images[star.imageIndex];
+            c.drawImage(img, -img.width / 2, -img.height / 2);
+        }
+
+        let scl = 0.3;
+        c.setTransform(scl, 0, 0, scl, w / 2, h / 2);
+        let sun = getImage("imgSun");
+        c.rotate(-time * 0.05);
+        c.drawImage(sun, -sun.width / 2, -sun.height / 2);
+
+
+        scl = 0.2;
+        c.setTransform(scl, 0, 0, scl, w / 2, h / 2);
+        let planet = getImage("imgPlanet");
+        c.rotate(time);
+        c.translate(300 / scl, 0);
+        c.drawImage(planet, -planet.width / 2, -planet.height / 2);
+
+
+        requestAnimationFrame(update);
+    }
+</script>
+
+<img id="imgStar1" src="assets/star1.png" onload="onAllImagesLoaded();"/>
+<img id="imgStar2" src="assets/star2.png" onload="onAllImagesLoaded();"/>
+<img id="imgStar3" src="assets/star3.png" onload="onAllImagesLoaded();"/>
+<img id="imgStar4" src="assets/star4.png" onload="onAllImagesLoaded();"/>
+<img id="imgSun" src="assets/sun.png" onload="onAllImagesLoaded();"/>
+<img id="imgPlanet" src="assets/planet.png" onload="onAllImagesLoaded();"/>
+</body>
+</html>

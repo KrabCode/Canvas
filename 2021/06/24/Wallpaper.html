@@ -24,12 +24,27 @@
 <canvas id="canvas">Your browser doesn't support canvas</canvas>
 
 
+<img id="star1" src="assets/star1.png" onload="onAllImagesLoaded();"/>
+<img id="star2" src="assets/star2.png" onload="onAllImagesLoaded();"/>
+<img id="star3" src="assets/star3.png" onload="onAllImagesLoaded();"/>
+<img id="star4" src="assets/star4.png" onload="onAllImagesLoaded();"/>
+<img id="sun"    src="assets/sun.png" onload="onAllImagesLoaded();"/>
+<img id="planet" src="assets/planet.png" onload="onAllImagesLoaded();"/>
+
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
 <script type="text/javascript" src="../../../utils/utils.js"></script>
 <script type="text/javascript">
     let canvas = document.getElementById("canvas");
     let c = canvas.getContext("2d");
 
+    let imageIds = [
+        "star1",
+        "star2",
+        "star3",
+        "star4",
+        "sun",
+        "planet"
+    ];
     let images = [];
     let stars = [];
 
@@ -41,19 +56,16 @@
         if (imagesLoadedCount < imageCount) {
             return;
         }
-        images[0] = document.getElementById("imgStar1");
-        images[1] = document.getElementById("imgStar2");
-        images[2] = document.getElementById("imgStar3");
-        images[3] = document.getElementById("imgStar4");
-        images[4] = document.getElementById("imgSun");
-        images[5] = document.getElementById("imgPlanet");
+        for(let i = 0; i < imageIds.length; i++){
+            images.push(document.getElementById(imageIds[i]));
+        }
         console.log("all images loaded");
         generateStars();
         modifyImages();
     }
 
     function generateStars() {
-        let starCount = 20;
+        let starCount = 50;
         for (let i = 0; i < starCount; i++) {
             let star = {
                 x: Math.random(),
@@ -67,26 +79,7 @@
     }
 
     function getImage(id) {
-        switch (id) {
-            case 'imgStar1': {
-                return images[0];
-            }
-            case 'imgStar2': {
-                return images[1];
-            }
-            case 'imgStar3': {
-                return images[2];
-            }
-            case 'imgStar4': {
-                return images[3];
-            }
-            case 'imgSun': {
-                return images[4];
-            }
-            case 'imgPlanet': {
-                return images[5];
-            }
-        }
+        return images[imageIds.indexOf(id)];
     }
 
     function smoothstep(min, max, value) {
@@ -100,6 +93,7 @@
             let tempCanvas = document.createElement('canvas');
             tempCanvas.width = img.width;
             tempCanvas.height = img.height;
+            console.log(tempCanvas.width);
             let tempCtx = tempCanvas.getContext("2d");
             tempCtx.drawImage(img, 0, 0);
             let imageData = tempCtx.getImageData(0, 0, img.width, img.height);
@@ -142,7 +136,7 @@
 
         for (let i = 0; i < stars.length; i++) {
             let star = stars[i];
-            let scl = 0.15;
+            let scl = 0.05;
             c.setTransform(scl, 0, 0, scl, star.x * w, star.y * h);
             c.rotate(star.rotationOffset + star.rotationSpeed * time);
             let img = images[star.imageIndex];
@@ -151,14 +145,14 @@
 
         let scl = 0.3;
         c.setTransform(scl, 0, 0, scl, w / 2, h / 2);
-        let sun = getImage("imgSun");
+        let sun = getImage("sun");
         c.rotate(-time * 0.05);
         c.drawImage(sun, -sun.width / 2, -sun.height / 2);
 
 
         scl = 0.2;
         c.setTransform(scl, 0, 0, scl, w / 2, h / 2);
-        let planet = getImage("imgPlanet");
+        let planet = getImage("planet");
         c.rotate(time);
         c.translate(300 / scl, 0);
         c.drawImage(planet, -planet.width / 2, -planet.height / 2);
@@ -168,11 +162,5 @@
     }
 </script>
 
-<img id="imgStar1" src="assets/star1.png" onload="onAllImagesLoaded();"/>
-<img id="imgStar2" src="assets/star2.png" onload="onAllImagesLoaded();"/>
-<img id="imgStar3" src="assets/star3.png" onload="onAllImagesLoaded();"/>
-<img id="imgStar4" src="assets/star4.png" onload="onAllImagesLoaded();"/>
-<img id="imgSun" src="assets/sun.png" onload="onAllImagesLoaded();"/>
-<img id="imgPlanet" src="assets/planet.png" onload="onAllImagesLoaded();"/>
 </body>
 </html>

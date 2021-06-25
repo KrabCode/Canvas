@@ -34,6 +34,10 @@
                 <label for="timeSlider">time</label>
                 <input type="range" id="timeSlider" class="slider" min="1" max="100" value="50">
             </li>
+            <li>
+                <label for="spreadSlider">spread</label>
+                <input type="range" id="spreadSlider" class="slider" min="1" max="100" value="50">
+            </li>
         </ul>
 
     </div>
@@ -57,6 +61,7 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_count;
+uniform float u_spread;
 
 out vec4 fragColor;
 const int colorsPerGradient = 5;
@@ -224,8 +229,8 @@ void main() {
     float minDistance = 1.;
     for (float i = 0.; i < u_count; i++){
         float iNorm = map(i, 0., u_count-1., 0., 1.);
-        float x = simplexNoise(vec3(t, -150.-iNorm*100., -200.));
-        float y = simplexNoise(vec3(t, iNorm*200., 1000.));
+        float x = simplexNoise(vec3(t, 150.-iNorm*u_spread, -200.));
+        float y = simplexNoise(vec3(t, iNorm*u_spread, 1000.));
 
         vec2 pos = 0.5+0.5*vec2(x, y);
         float distance = length(vec2(pos.x - uv.x, pos.y - uv.y));
@@ -256,7 +261,7 @@ void main() {
     closeNav();
 
     let canvas, gl, program, positionBuffer;
-    let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation;
+    let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation, spreadUniformLocation;
     let width, height;
     setTitleToFilename();
 
@@ -277,6 +282,7 @@ void main() {
         resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
         countUniformLocation = gl.getUniformLocation(program, "u_count");
         timeUniformLocation = gl.getUniformLocation(program, "u_time");
+        spreadUniformLocation = gl.getUniformLocation(program, "u_spread");
     }
 
     setup();
@@ -308,6 +314,7 @@ void main() {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform1f(countUniformLocation, document.getElementById("countSlider").value);
         gl.uniform1f(timeUniformLocation, time * document.getElementById("timeSlider").value);
+        gl.uniform1f(spreadUniformLocation, document.getElementById("spreadSlider").value);
         gl.drawArrays(
             gl.TRIANGLES,
             0,     // offset

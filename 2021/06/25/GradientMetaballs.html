@@ -27,16 +27,16 @@
 
         <ul class="mainGuiList">
             <li>
-                <label for="countSlider">count</label>
-                <input type="range" id="countSlider" class="slider" min="1" max="100" value="50">
-            </li>
-            <li>
                 <label for="timeSlider">time</label>
                 <input type="range" id="timeSlider" class="slider" min="1" max="100" value="50">
             </li>
             <li>
+                <label for="countSlider">count</label>
+                <input type="range" id="countSlider" class="slider" min="1" max="100" value="20">
+            </li>
+            <li>
                 <label for="spreadSlider">spread</label>
-                <input type="range" id="spreadSlider" class="slider" min="1" max="100" value="50">
+                <input type="range" id="spreadSlider" class="slider" min="1" max="1000" value="50">
             </li>
         </ul>
 
@@ -258,7 +258,6 @@ void main() {
         document.getElementById("mySidenav").style.width = "0";
         document.getElementById("canvas").style.left = "20px";
     }
-    closeNav();
 
     let canvas, gl, program, positionBuffer;
     let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation, spreadUniformLocation;
@@ -314,7 +313,7 @@ void main() {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform1f(countUniformLocation, document.getElementById("countSlider").value);
         gl.uniform1f(timeUniformLocation, time * document.getElementById("timeSlider").value);
-        gl.uniform1f(spreadUniformLocation, document.getElementById("spreadSlider").value);
+        gl.uniform1f(spreadUniformLocation, document.getElementById("spreadSlider").value / 10);
         gl.drawArrays(
             gl.TRIANGLES,
             0,     // offset

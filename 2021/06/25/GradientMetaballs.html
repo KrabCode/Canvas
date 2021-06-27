@@ -12,6 +12,19 @@
             z-index: -1;
         }
 
+        .flexbox {
+            display: flex;
+        }
+
+        .row-direction {
+            flex-direction: row;
+        }
+
+        .col-direction {
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
     </style>
     <link rel="stylesheet" href="../../../utils/sidebar.css">
     <title id="title"></title>
@@ -26,6 +39,30 @@
         <h2>Gradient Metaballs</h2>
 
         <ul class="mainGuiList">
+            <li>
+                <label for="gradientA">
+                    gradient
+                </label>
+
+                <div id="gradientA" class="flexbox row-direction">
+                    <div class="flexbox col-direction">
+                        <input id="a-color-0" type="color" value="#e66465"/>
+                        <input id="a-pos-0"   type="text" value="0.0" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-1" type="color" value="#F0D9E7"/>
+                        <input id="a-pos-1"   type="text" value="0.25" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-2" type="color" value="#FF94CC"/>
+                        <input id="a-pos-2"   type="text" value="0.75" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-3"  type="color" value="#A239EA"/>
+                        <input id="a-pos-3"    type="text" value="1.0" size="1"/>
+                    </div>
+                </div>
+            </li>
             <li>
                 <label for="timeSlider">time</label>
                 <input type="range" id="timeSlider" class="slider" min="1" max="100" value="50">
@@ -77,11 +114,12 @@ uniform float u_x;
 uniform float u_y;
 uniform float u_radius;
 uniform float u_glow;
+uniform vec4[4] u_gradientA;
 
 const float TAU = 6.283185;
 
 out vec4 fragColor;
-const int colorsPerGradient = 5;
+const int colorsPerGradient = 4;
 
 //--------------------------------------GRADIENT-----------------------------------
 //--------------------------------color point array logic--------------------------
@@ -234,12 +272,10 @@ float simplexFbm(vec3 v){
 
 void main() {
     colorPoint[colorsPerGradient] gradient = colorPoint[](
-    colorPoint(0.0, hexToRgb(0xF0D9E7)),
-    colorPoint(0.1, hexToRgb(0xFF94CC)),
-    colorPoint(0.4, hexToRgb(0xA239EA)),
-    colorPoint(1.0, hexToRgb(0x5C33F6)),
-    colorPoint(10., vec3(1, 0, 0)));
-
+    colorPoint(u_gradientA[0].a, u_gradientA[0].rgb / 255.),
+    colorPoint(u_gradientA[1].a, u_gradientA[1].rgb / 255.),
+    colorPoint(u_gradientA[2].a, u_gradientA[2].rgb / 255.),
+    colorPoint(u_gradientA[3].a, u_gradientA[3].rgb / 255.));
 
     float t = u_time * 0.00002;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
@@ -253,10 +289,10 @@ void main() {
         distance = smoothstep(0.0, u_glow, distance);
         minDistance = min(minDistance, distance);
     }
-//
-//    minDistance += 0.1*simplexNoise(vec3(uv*50000., t*6.));
-//    minDistance = smoothstep(0.01, 0.1, minDistance);
-    vec3 clr = gradientColorAt(minDistance, gradient);
+    //
+    //    minDistance += 0.1*simplexNoise(vec3(uv*50000., t*6.));
+    //    minDistance = smoothstep(0.01, 0.1, minDistance);
+    vec3 clr =  gradientColorAt(minDistance, gradient);
     fragColor = vec4(clr, 1);
 }
 </script>
@@ -273,11 +309,10 @@ void main() {
     function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
     }
-    closeNav();
 
     let canvasGL, gl, program, positionBuffer;
     let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation,
-        xUniformLocation, yUniformLocation, radiusUniformLocation, glowUniformLocation;
+        xUniformLocation, yUniformLocation, radiusUniformLocation, glowUniformLocation, gradientAUniformLocation;
     let width, height;
 
     setTitleToFilename();
@@ -304,6 +339,7 @@ void main() {
         yUniformLocation = gl.getUniformLocation(program, "u_y");
         radiusUniformLocation = gl.getUniformLocation(program, "u_radius");
         glowUniformLocation = gl.getUniformLocation(program, "u_glow");
+        gradientAUniformLocation = gl.getUniformLocation(program, "u_gradientA");
     }
 
     setup();
@@ -338,6 +374,23 @@ void main() {
         gl.uniform1f(yUniformLocation, document.getElementById("ySlider").value / 10);
         gl.uniform1f(radiusUniformLocation, document.getElementById("rSlider").value / 100);
         gl.uniform1f(glowUniformLocation, document.getElementById("glowSlider").value / 100);
+
+        let gradientAColors = [
+            hexToRgb(document.getElementById("a-color-0").value),
+            hexToRgb(document.getElementById("a-color-1").value),
+            hexToRgb(document.getElementById("a-color-2").value),
+            hexToRgb(document.getElementById("a-color-3").value),
+        ];
+
+        let gradientA = [
+            gradientAColors[0].r, gradientAColors[0].g, gradientAColors[0].b, parseFloat(document.getElementById("a-pos-0").value),
+            gradientAColors[1].r, gradientAColors[1].g, gradientAColors[1].b, parseFloat(document.getElementById("a-pos-1").value),
+            gradientAColors[2].r, gradientAColors[2].g, gradientAColors[2].b, parseFloat(document.getElementById("a-pos-2").value),
+            gradientAColors[3].r, gradientAColors[3].g, gradientAColors[3].b, parseFloat(document.getElementById("a-pos-3").value)
+        ];
+
+        gl.uniform4fv(gradientAUniformLocation, gradientA);
+
         gl.drawArrays(
             gl.TRIANGLES,
             0,     // offset
@@ -345,6 +398,16 @@ void main() {
         );
         requestAnimationFrame(update);
     }
+
+    function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
 
     function createShader(gl, type, source) {
         let shader = gl.createShader(type);

@@ -35,13 +35,25 @@
                 <input type="range" id="countSlider" class="slider" min="1" max="100" value="20">
             </li>
             <li>
-                <label for="spreadSlider">spread</label>
-                <input type="range" id="spreadSlider" class="slider" min="1" max="1000" value="50">
+                <label for="xSlider">x</label>
+                <input type="range" id="xSlider" class="slider" min="0" max="100" value="73">
+            </li>
+            <li>
+                <label for="ySlider">y</label>
+                <input type="range" id="ySlider" class="slider" min="0" max="100" value="20">
+            </li>
+            <li>
+                <label for="rSlider">radius</label>
+                <input type="range" id="rSlider" class="slider" min="1" max="100" value="30">
+            </li>
+            <li>
+                <label for="glowSlider">glow</label>
+                <input type="range" id="glowSlider" class="slider" min="1" max="100" value="30">
             </li>
         </ul>
 
     </div>
-    <canvas id="canvas"></canvas>
+    <canvas id="canvasGL" style="z-index: 20;"></canvas>
 </div>
 <script type="text/javascript" src="https://livejs.com/live.js"></script>
 <script type="text/javascript" src="../../../utils/utils.js"></script>
@@ -61,7 +73,12 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_count;
-uniform float u_spread;
+uniform float u_x;
+uniform float u_y;
+uniform float u_radius;
+uniform float u_glow;
+
+const float TAU = 6.283185;
 
 out vec4 fragColor;
 const int colorsPerGradient = 5;
@@ -224,21 +241,21 @@ void main() {
     colorPoint(10., vec3(1, 0, 0)));
 
 
-    float t = u_time * 0.00001;
+    float t = u_time * 0.00002;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
     float minDistance = 1.;
     for (float i = 0.; i < u_count; i++){
-        float iNorm = map(i, 0., u_count-1., 0., 1.);
-        float x = simplexNoise(vec3(t, 150.-iNorm*u_spread, -200.));
-        float y = simplexNoise(vec3(t, iNorm*u_spread, 1000.));
-
-        vec2 pos = 0.5+0.5*vec2(x, y);
+        float iNorm = TAU * map(i, 0., u_count-1., 0., 1.);
+        float x = cos(u_x *iNorm + t);
+        float y = sin(u_y *iNorm + t);
+        vec2 pos = 0.5+u_radius*vec2(x, y);
         float distance = length(vec2(pos.x - uv.x, pos.y - uv.y));
-        minDistance = min(0.5-minDistance, distance);
+        distance = smoothstep(0.0, u_glow, distance);
+        minDistance = min(minDistance, distance);
     }
-
-    minDistance += 0.1*simplexNoise(vec3(uv*50000., t*6.));
-    minDistance = smoothstep(0.0, 0.5, minDistance);
+//
+//    minDistance += 0.1*simplexNoise(vec3(uv*50000., t*6.));
+//    minDistance = smoothstep(0.01, 0.1, minDistance);
     vec3 clr = gradientColorAt(minDistance, gradient);
     fragColor = vec4(clr, 1);
 }
@@ -250,23 +267,25 @@ void main() {
     /* Set the width of the side navigation to 250px */
     function openNav() {
         document.getElementById("mySidenav").style.width = "250px";
-        document.getElementById("canvas").style.left = "270px";
     }
 
     /* Set the width of the side navigation to 0 */
     function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
-        document.getElementById("canvas").style.left = "20px";
     }
+    closeNav();
 
-    let canvas, gl, program, positionBuffer;
-    let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation, spreadUniformLocation;
+    let canvasGL, gl, program, positionBuffer;
+    let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, countUniformLocation,
+        xUniformLocation, yUniformLocation, radiusUniformLocation, glowUniformLocation;
     let width, height;
+
     setTitleToFilename();
 
+
     function setup() {
-        canvas = document.getElementById("canvas");
-        gl = canvas.getContext("webgl2");
+        canvasGL = document.getElementById("canvasGL");
+        gl = canvasGL.getContext("webgl2");
         if (!gl) {
             alert("webgl is not supported by your browser");
             return;
@@ -281,15 +300,17 @@ void main() {
         resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
         countUniformLocation = gl.getUniformLocation(program, "u_count");
         timeUniformLocation = gl.getUniformLocation(program, "u_time");
-        spreadUniformLocation = gl.getUniformLocation(program, "u_spread");
+        xUniformLocation = gl.getUniformLocation(program, "u_x");
+        yUniformLocation = gl.getUniformLocation(program, "u_y");
+        radiusUniformLocation = gl.getUniformLocation(program, "u_radius");
+        glowUniformLocation = gl.getUniformLocation(program, "u_glow");
     }
 
     setup();
 
     function update(time) {
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvasGL.width = window.innerWidth;
+        canvasGL.height = window.innerHeight;
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.useProgram(program);
         gl.enableVertexAttribArray(positionAttributeLocation);
@@ -313,7 +334,10 @@ void main() {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform1f(countUniformLocation, document.getElementById("countSlider").value);
         gl.uniform1f(timeUniformLocation, time * document.getElementById("timeSlider").value);
-        gl.uniform1f(spreadUniformLocation, document.getElementById("spreadSlider").value / 10);
+        gl.uniform1f(xUniformLocation, document.getElementById("xSlider").value / 10);
+        gl.uniform1f(yUniformLocation, document.getElementById("ySlider").value / 10);
+        gl.uniform1f(radiusUniformLocation, document.getElementById("rSlider").value / 100);
+        gl.uniform1f(glowUniformLocation, document.getElementById("glowSlider").value / 100);
         gl.drawArrays(
             gl.TRIANGLES,
             0,     // offset

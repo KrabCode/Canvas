@@ -278,13 +278,13 @@ void main() {
     colorPoint(u_gradientA[3].a, u_gradientA[3].rgb / 255.));
 
     float t = u_time * 0.00002;
-    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 uv = (gl_FragCoord.xy - .5 * u_resolution.xy) / u_resolution.xy;
     float minDistance = 1.;
     for (float i = 0.; i < u_count; i++){
         float iNorm = TAU * map(i, 0., u_count-1., 0., 1.);
         float x = cos(u_x *iNorm + t);
         float y = sin(u_y *iNorm + t);
-        vec2 pos = 0.5+u_radius*vec2(x, y);
+        vec2 pos = u_radius*vec2(x, y);
         float distance = length(vec2(pos.x - uv.x, pos.y - uv.y));
         distance = smoothstep(0.0, u_glow, distance);
         minDistance = min(minDistance, distance);

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<head>
+    <style>
+        body, html {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        canvas {
+            z-index: -1;
+        }
+
+        .flexbox {
+            display: flex;
+        }
+
+        .row-direction {
+            flex-direction: row;
+        }
+
+        .col-direction {
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+    </style>
+    <link rel="stylesheet" href="../../../utils/sidebar.css">
+    <title id="title"></title>
+</head>
+
+<body>
+<div id="container">
+    <a href="javascript:void(0)" class="openbtn" onclick="openNav()">></a>
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+
+        <h2>Gradient Mandala</h2>
+
+        <ul class="mainGuiList">
+            <li>
+                <label for="gradientA">
+                    gradient
+                </label>
+
+                <div id="gradientA" class="flexbox row-direction">
+                    <div class="flexbox col-direction">
+                        <input id="a-color-0" type="color" value="#F0D9E7"/>
+                        <input id="a-pos-0"   type="text" value="0.0" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-1" type="color" value="#FF94CC"/>
+                        <input id="a-pos-1"   type="text" value="0.25" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-2" type="color" value="#A239EA"/>
+                        <input id="a-pos-2"   type="text" value="0.75" size="1"/>
+                    </div>
+                    <div class="flexbox col-direction">
+                        <input id="a-color-3"  type="color" value="#5C33F6"/>
+                        <input id="a-pos-3"    type="text" value="1.0" size="1"/>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <label for="timeSlider">time</label>
+                <input type="range" id="timeSlider" class="slider" min="1" max="1000" value="200">
+            </li>
+            <li>
+                <label for="mirrorsSlider">mirrors</label>
+                <input type="range" id="mirrorsSlider" class="slider" min="0" max="100" value="20">
+            </li>
+            <li>
+                <label for="scaleSlider">scale</label>
+                <input type="range" id="scaleSlider" class="slider" min="1" max="200" value="73">
+            </li>
+            <li>
+                <label for="octavesSlider">detail layers</label>
+                <input type="range" id="octavesSlider" class="slider" min="1" max="6" value="2">
+            </li>
+
+            <li>
+                <label for="detailStrengthSlider">detail strength</label>
+                <input type="range" id="detailStrengthSlider" class="slider" min="1" max="100" value="30">
+            </li>
+            <li>
+                <label for="detailScaleSlider">detail scale</label>
+                <input type="range" id="detailScaleSlider" class="slider" min="1" max="500" value="100">
+            </li>
+        </ul>
+
+    </div>
+    <canvas id="canvasGL" style="z-index: 20;"></canvas>
+</div>
+<script type="text/javascript" src="https://livejs.com/live.js"></script>
+<script type="text/javascript" src="../../../utils/utils.js"></script>
+<script id="vertex-shader-2d" type="x-shader/x-vertex">#version 300 es
+in vec4 a_position;
+
+void main() {
+    gl_Position = a_position;
+}
+</script>
+
+
+<script id="fragment-shader-2d" type="x-shader/x-fragment">#version 300 es
+
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_octaves;
+uniform float u_x;
+uniform float u_y;
+uniform float u_amp;
+uniform float u_freq;
+uniform vec4[4] u_gradientA;
+
+const float TAU = 6.283185;
+
+out vec4 fragColor;
+const int colorsPerGradient = 4;
+
+//--------------------------------------GRADIENT-----------------------------------
+//--------------------------------color point array logic--------------------------
+//-------------------------------------by Krabcode---------------------------------
+
+struct colorPoint
+{
+    float pos;
+    vec3 val;
+};
+
+colorPoint emptyColorPoint()
+{
+    return colorPoint(1.1, vec3(1., 0., 0.));
+}
+
+float map(float value, float start1, float stop1, float start2, float stop2)
+{
+    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+}
+
+float norm(float value, float start, float stop)
+{
+    return map(value, start, stop, 0., 1.);
+}
+
+int findClosestLeftNeighbourIndex(float pos, colorPoint[colorsPerGradient] gradient)
+{
+    for (int i = 0; i < colorsPerGradient; i++){
+        if (pos >= gradient[i].pos && pos <= gradient[i+1].pos){
+            return i;
+        }
+    }
+    return 0;
+}
+
+vec3 gradientColorAt(float normalizedPos, colorPoint[colorsPerGradient] gradient)
+{
+    float pos = clamp(normalizedPos, 0., 1.);
+    int leftIndex = findClosestLeftNeighbourIndex(pos, gradient);
+    int rightIndex = leftIndex + 1;
+    colorPoint A = gradient[leftIndex];
+    colorPoint B = gradient[rightIndex];
+    float normalizedPosBetweenNeighbours = norm(pos, A.pos, B.pos);
+    return mix(A.val, B.val, normalizedPosBetweenNeighbours);
+}
+
+vec3 hexToRgb(int color)
+{
+    float rValue = float(color / 256 / 256);
+    float gValue = float(color / 256 - int(rValue * 256.0));
+    float bValue = float(color - int(rValue * 256.0 * 256.0) - int(gValue * 256.0));
+    return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
+}
+
+vec3 gammaCorrection(vec3 rgb){
+    return pow(smoothstep(0., 1., rgb), vec3(1.0/2.2));
+}
+
+vec4 gammaCorrection(vec4 rgba){
+    return vec4(gammaCorrection(rgba.rgb), 1.);
+}
+
+// Simplex 3D Noise
+// by Ian McEwan, Ashima Arts
+//
+vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+float simplexNoise(vec3 v){
+    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+    // First corner
+    vec3 i = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+
+    // Other corners
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+
+    // x0 = x0 - 0. + 0.0 * C
+    vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+    vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+    vec3 x3 = x0 - 1. + 3.0 * C.xxx;
+
+    // Permutations
+    i = mod(i, 289.0);
+    vec4 p = permute(permute(permute(
+    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+    + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+    + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+    // Gradients
+    // ( N*N points uniformly over a square, mapped onto an octahedron.)
+    float n_ = 1.0/7.0;// N=7
+    vec3 ns = n_ * D.wyz - D.xzx;
+
+    vec4 j = p - 49.0 * floor(p * ns.z *ns.z);// mod(p,N*N)
+
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);// mod(j,N)
+
+    vec4 x = x_ *ns.x + ns.yyyy;
+    vec4 y = y_ *ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+
+    vec4 s0 = floor(b0)*2.0 + 1.0;
+    vec4 s1 = floor(b1)*2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+
+    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+
+    vec3 p0 = vec3(a0.xy, h.x);
+    vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z);
+    vec3 p3 = vec3(a1.zw, h.w);
+
+    //Normalise gradients
+    vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+    p0 *= norm.x;
+    p1 *= norm.y;
+    p2 *= norm.z;
+    p3 *= norm.w;
+
+    // Mix final noise value
+    vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m*m, vec4(dot(p0, x0), dot(p1, x1),
+    dot(p2, x2), dot(p3, x3)));
+}
+
+float simplexFbm(vec3 v){
+    float sum = 0.;
+    float amp = 1.;
+    float frq = 1.;
+    int octaves = int(u_octaves);
+    for (int i = 0; i < octaves; i++){
+        sum += amp*simplexNoise(v * frq);
+        amp *= u_amp;
+        frq *= u_freq;
+        v += vec3(19.234,124.121, -732.154);
+    }
+    return 0.5 + 0.5 * sum;
+}
+
+void main() {
+    colorPoint[colorsPerGradient] gradient = colorPoint[](
+    colorPoint(u_gradientA[0].a, u_gradientA[0].rgb / 255.),
+    colorPoint(u_gradientA[1].a, u_gradientA[1].rgb / 255.),
+    colorPoint(u_gradientA[2].a, u_gradientA[2].rgb / 255.),
+    colorPoint(u_gradientA[3].a, u_gradientA[3].rgb / 255.));
+
+    float t = u_time * 0.00002;
+    vec2 uv = (gl_FragCoord.xy - .5 * u_resolution.xy) / u_resolution.xy;
+    float minDistance = 1.;
+
+    vec2 ra = vec2(u_x*length(uv), cos(u_y*atan(uv.y, uv.x)));
+    float pct = simplexFbm(vec3(ra, t));
+
+    /*
+    for (float i = 0.; i < u_octaves; i++){
+        float iNorm = TAU * map(i, 0., u_octaves-1., 0., 1.);
+        float x = cos(u_x *iNorm + t);
+        float y = sin(u_y *iNorm + t);
+        vec2 pos = u_amp*vec2(x, y);
+        float distance = length(vec2(pos.x - uv.x, pos.y - uv.y));
+        distance = smoothstep(0.0, u_freq, distance);
+        minDistance = min(minDistance, distance);
+    }
+    */
+    //
+    //    minDistance += 0.1*simplexNoise(vec3(uv*50000., t*6.));
+    //    minDistance = smoothstep(0.01, 0.1, minDistance);
+    vec3 clr =  gradientColorAt(pct, gradient);
+    fragColor = vec4(clr, 1);
+}
+</script>
+<script type="application/javascript">
+
+    /* Set the width of the side navigation to 250px */
+    function openNav() {
+        document.getElementById("mySidenav").style.width = "250px";
+    }
+
+    /* Set the width of the side navigation to 0 */
+    function closeNav() {
+        document.getElementById("mySidenav").style.width = "0";
+    }
+
+    let canvasGL, gl, program, positionBuffer;
+    let positionAttributeLocation, resolutionUniformLocation, timeUniformLocation, octavesUniformLocation,
+        xUniformLocation, yUniformLocation, radiusUniformLocation, glowUniformLocation, gradientAUniformLocation,
+        detailUniformLocation;
+    let width, height;
+    let myTime = 0;
+
+    setTitleToFilename();
+
+
+    function setup() {
+        canvasGL = document.getElementById("canvasGL");
+        gl = canvasGL.getContext("webgl2");
+        if (!gl) {
+            alert("webgl is not supported by your browser");
+            return;
+        }
+        let vertexShaderSource = document.querySelector("#vertex-shader-2d").text;
+        let fragmentShaderSource = document.querySelector("#fragment-shader-2d").text;
+        let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        program = createProgram(gl, vertexShader, fragmentShader);
+        positionBuffer = gl.createBuffer();
+        positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+        resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+        octavesUniformLocation = gl.getUniformLocation(program, "u_octaves");
+        detailUniformLocation = gl.getUniformLocation(program, "u_detail");
+        timeUniformLocation = gl.getUniformLocation(program, "u_time");
+        xUniformLocation = gl.getUniformLocation(program, "u_x");
+        yUniformLocation = gl.getUniformLocation(program, "u_y");
+        radiusUniformLocation = gl.getUniformLocation(program, "u_amp");
+        glowUniformLocation = gl.getUniformLocation(program, "u_freq");
+        gradientAUniformLocation = gl.getUniformLocation(program, "u_gradientA");
+    }
+
+    setup();
+
+    function update(time) {
+        canvasGL.width = window.innerWidth;
+        canvasGL.height = window.innerHeight;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.useProgram(program);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,  // first triangle
+            1, -1,
+            -1, 1,
+            -1, 1,  // second triangle
+            1, -1,
+            1, 1,
+        ]), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(
+            positionAttributeLocation,
+            2,          // 2 components per iteration
+            gl.FLOAT,   // the data is 32bit floats
+            false,      // don't normalize the data
+            0,          // 0 = move forward size * sizeof(type) each iteration to get the next position
+            0,          // start at the beginning of the buffer
+        );
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+        gl.uniform1f(octavesUniformLocation, document.getElementById("octavesSlider").value);
+        myTime += parseFloat(document.getElementById("timeSlider").value);
+        gl.uniform1f(timeUniformLocation, myTime);
+        gl.uniform1f(xUniformLocation, document.getElementById("scaleSlider").value);
+        gl.uniform1f(yUniformLocation, document.getElementById("mirrorsSlider").value);
+        gl.uniform1f(radiusUniformLocation, document.getElementById("detailStrengthSlider").value / 50);
+        gl.uniform1f(glowUniformLocation, document.getElementById("detailScaleSlider").value / 50);
+
+        let gradientAColors = [
+            hexToRgb(document.getElementById("a-color-0").value),
+            hexToRgb(document.getElementById("a-color-1").value),
+            hexToRgb(document.getElementById("a-color-2").value),
+            hexToRgb(document.getElementById("a-color-3").value),
+        ];
+
+        let gradientA = [
+            gradientAColors[0].r, gradientAColors[0].g, gradientAColors[0].b, parseFloat(document.getElementById("a-pos-0").value),
+            gradientAColors[1].r, gradientAColors[1].g, gradientAColors[1].b, parseFloat(document.getElementById("a-pos-1").value),
+            gradientAColors[2].r, gradientAColors[2].g, gradientAColors[2].b, parseFloat(document.getElementById("a-pos-2").value),
+            gradientAColors[3].r, gradientAColors[3].g, gradientAColors[3].b, parseFloat(document.getElementById("a-pos-3").value)
+        ];
+
+        gl.uniform4fv(gradientAUniformLocation, gradientA);
+
+        gl.drawArrays(
+            gl.TRIANGLES,
+            0,     // offset
+            6,     // num vertices to process
+        );
+        requestAnimationFrame(update);
+    }
+
+    function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+
+    function createShader(gl, type, source) {
+        let shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+            return shader;
+        }
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
+
+    function createProgram(gl, vertexShader, fragmentShader) {
+        let program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        let success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+            return program;
+        }
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
+
+    requestAnimationFrame(update);
+</script>
